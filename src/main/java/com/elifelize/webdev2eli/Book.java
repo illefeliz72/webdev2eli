@@ -4,16 +4,16 @@ public class Book {
     private Long id;
     private String title;
     private String author;
-    private Double price;
+    private String isbn;
 
     public Book() {
     }
 
-    public Book(Long id, String title, String author, Double price) {
+    public Book(Long id, String title, String author, String isbn) {
         this.id = id;
         this.title = title;
         this.author = author;
-        this.price = price;
+        this.isbn = isbn;
     }
 
     public Long getId() {
@@ -40,11 +40,11 @@ public class Book {
         this.author = author;
     }
 
-    public Double getPrice() {
-        return price;
+    public String getIsbn() {
+        return isbn;
     }
 
-    public void setPrice(Double price) {
-        this.price = price;
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
     }
 }
