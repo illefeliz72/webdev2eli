@@ -1,0 +1,28 @@
+{
+    "client": "Thunder Client / Postman",
+    "collectionName": "Pet API Tests",
+    "requests": [
+        {
+            "name": "Get All Pets",
+            "method": "GET",
+            "url": "http://localhost:8080/api/pets?page=0&size=5"
+        },
+        {
+            "name": "Create Pet",
+            "method": "POST",
+            "url": "http://localhost:8080/api/pets",
+            "body": {
+                "name": "Rex",
+                "species": "Dog",
+                "age": 4,
+                "breed": "German Shepherd",
+                "microchipNumber": "CHIP-999"
+            }
+        },
+        {
+            "name": "Get Pet By ID",
+            "method": "GET",
+            "url": "http://localhost:8080/api/pets/1"
+        }
+    ]
+}

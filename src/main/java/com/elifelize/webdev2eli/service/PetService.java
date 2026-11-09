@@ -30,7 +30,7 @@ public class PetService {
                 pet.getBreed());
     }
 
-    public List<PetResponseDTO> getAllPets() {
+    public List<PetResponseDTO> getAllPets(int page, int size, String sort, String direction, String species) {
         return petRepository.findAll().stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
