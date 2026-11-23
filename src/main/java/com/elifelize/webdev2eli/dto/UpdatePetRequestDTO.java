@@ -1,21 +1,21 @@
 package com.elifelize.webdev2eli.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class UpdatePetRequestDTO {
 
+    @NotBlank(message = "Microchip number is required")
     private String microchipNumber;
+
+    @NotBlank(message = "Pet name is required")
     private String name;
+
+    @NotBlank(message = "Species is required")
     private String species;
+
     private String breed;
-
-    public UpdatePetRequestDTO() {
-    }
-
-    public UpdatePetRequestDTO(String microchipNumber, String name, String species, String breed) {
-        this.microchipNumber = microchipNumber;
-        this.name = name;
-        this.species = species;
-        this.breed = breed;
-    }
+    private String status;
+    private Long ownerId;
 
     public String getMicrochipNumber() {
         return microchipNumber;
@@ -47,5 +47,21 @@ public class UpdatePetRequestDTO {
 
     public void setBreed(String breed) {
         this.breed = breed;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Long getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(Long ownerId) {
+        this.ownerId = ownerId;
     }
 }

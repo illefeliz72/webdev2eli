@@ -1,6 +1,8 @@
 package com.elifelize.webdev2eli.config;
 
+import com.elifelize.webdev2eli.entity.Owner;
 import com.elifelize.webdev2eli.entity.Pet;
+import com.elifelize.webdev2eli.repository.OwnerRepository;
 import com.elifelize.webdev2eli.repository.PetRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -9,33 +11,28 @@ import org.springframework.stereotype.Component;
 public class DataInitializer implements CommandLineRunner {
 
     private final PetRepository petRepository;
+    private final OwnerRepository ownerRepository;
 
-    public DataInitializer(PetRepository petRepository) {
+    public DataInitializer(PetRepository petRepository, OwnerRepository ownerRepository) {
         this.petRepository = petRepository;
+        this.ownerRepository = ownerRepository;
     }
 
     @Override
     public void run(String... args) {
+        if (ownerRepository.count() == 0) {
+            ownerRepository.save(new Owner("Alex Rivera", "alex@example.com", "555-0101"));
+            ownerRepository.save(new Owner("Jamie Cruz", "jamie@example.com", "555-0102"));
+        }
+
         if (petRepository.count() == 0) {
-            Pet pet1 = new Pet();
-            pet1.setName("Buddy");
-            pet1.setSpecies("Dog");
-            pet1.setBreed("Golden Retriever");
-            pet1.setMicrochipNumber("CHIP-1001");
+            Pet pet1 = new Pet("CHIP-1001", "Buddy", "Dog", "Golden Retriever");
             petRepository.save(pet1);
 
-            Pet pet2 = new Pet();
-            pet2.setName("Luna");
-            pet2.setSpecies("Cat");
-            pet2.setBreed("Siamese");
-            pet2.setMicrochipNumber("CHIP-1002");
+            Pet pet2 = new Pet("CHIP-1002", "Luna", "Cat", "Siamese");
             petRepository.save(pet2);
 
-            Pet pet3 = new Pet();
-            pet3.setName("Milo");
-            pet3.setSpecies("Dog");
-            pet3.setBreed("Beagle");
-            pet3.setMicrochipNumber("CHIP-1003");
+            Pet pet3 = new Pet("CHIP-1003", "Milo", "Dog", "Beagle");
             petRepository.save(pet3);
         }
     }

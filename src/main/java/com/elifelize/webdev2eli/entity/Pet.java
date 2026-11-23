@@ -19,6 +19,13 @@ public class Pet {
     private String species;
     private String breed;
 
+    @Column(nullable = false)
+    private String status = "AVAILABLE";
+
+    @ManyToOne
+    @JoinColumn(name = "owner_id")
+    private Owner owner;
+
     public Pet() {
     }
 
@@ -27,6 +34,7 @@ public class Pet {
         this.name = name;
         this.species = species;
         this.breed = breed;
+        this.status = "AVAILABLE";
     }
 
     public Long getId() {
@@ -67,5 +75,21 @@ public class Pet {
 
     public void setBreed(String breed) {
         this.breed = breed;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Owner getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Owner owner) {
+        this.owner = owner;
     }
 }

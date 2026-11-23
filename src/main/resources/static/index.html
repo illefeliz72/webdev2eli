@@ -1,60 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <title>Pet & Task Manager — Week 13</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            max-width: 700px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .box {
-            border: 1px solid #ccc;
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 6px;
-        }
-
-        li {
-            cursor: pointer;
-            padding: 0.4rem 0;
-            color: #0056b3;
-            text-decoration: underline;
-        }
-
-        #status {
-            font-weight: bold;
-            margin: 1rem 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pet Adoption & Registry (Week 14 F2)</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-    <h1>Pets Directory</h1>
+  <header>
+    <h1>Pet Adoption & Registry System</h1>
+    <p>Week 14 (F2) — Full CRUD & Atomic Adoption Workflow</p>
+  </header>
 
-    <div>
-        <input type="number" id="pet-id-input" placeholder="Enter Pet ID" />
-        <button id="lookup-btn">Find Pet by ID</button>
-        <button id="reload-btn">Reload List</button>
-    </div>
+  <main>
+    <!-- Global Status Banner -->
+    <div id="statusBanner" class="banner hidden" role="status" aria-live="polite"></div>
 
-    <p id="status" role="status"></p>
+    <!-- SECTION 1: ATOMIC BUSINESS WORKFLOW -->
+    <section class="card workflow-card">
+      <h2>1. Adopt a Pet (Atomic Transaction Workflow)</h2>
+      <p class="hint">Updates Pet status/owner and inserts an Adoption record in one <code>@Transactional</code> operation.</p>
+      <form id="adoptionForm">
+        <div class="grid-3">
+          <div>
+            <label for="adoptPetSelect">Available Pet *</label>
+            <select id="adoptPetSelect" required>
+              <option value="">-- Select Available Pet --</option>
+            </select>
+          </div>
+          <div>
+            <label for="adoptOwnerSelect">Adopting Owner *</label>
+            <select id="adoptOwnerSelect" required>
+              <option value="">-- Select Owner --</option>
+            </select>
+          </div>
+          <div>
+            <label for="adoptNotes">Adoption Notes</label>
+            <input type="text" id="adoptNotes" placeholder="e.g., Home check passed" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <label class="checkbox-label">
+            <input type="checkbox" id="simulateRollback" />
+            Simulate post-write failure (proves MySQL rollback)
+          </label>
+          <button type="submit" id="adoptSubmitBtn" class="btn-primary">Complete Adoption</button>
+        </div>
+      </form>
 
-    <div class="box">
-        <h2>All Pets (Click one for details)</h2>
-        <ul id="items"></ul>
-    </div>
+      <h3>Recent Adoptions</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Pet</th>
+            <th>New Owner</th>
+            <th>Adopted At</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="adoptionsTableBody"></tbody>
+      </table>
+    </section>
 
-    <div class="box">
-        <h2>Pet Details</h2>
-        <div id="detail">Select a pet above or search by ID.</div>
-    </div>
+    <!-- SECTION 2: PETS CRUD -->
+    <section class="card">
+      <h2>2. Pets Management (Principal Resource 1)</h2>
+      <form id="petForm">
+        <input type="hidden" id="petEditId" />
+        <div class="grid-3">
+          <div>
+            <label for="petMicrochip">Microchip Number *</label>
+            <input type="text" id="petMicrochip" required placeholder="CHIP-1004" />
+          </div>
+          <div>
+            <label for="petName">Pet Name *</label>
+            <input type="text" id="petName" required placeholder="Charlie" />
+          </div>
+          <div>
+            <label for="petSpecies">Species *</label>
+            <input type="text" id="petSpecies" required placeholder="Dog" />
+          </div>
+          <div>
+            <label for="petBreed">Breed</label>
+            <input type="text" id="petBreed" placeholder="Labrador" />
+          </div>
+          <div>
+            <label for="petOwnerSelect">Assigned Owner (Optional)</label>
+            <select id="petOwnerSelect">
+              <option value="">-- Unassigned (Available) --</option>
+            </select>
+          </div>
+          <div>
+            <label for="petStatus">Status</label>
+            <select id="petStatus">
+              <option value="AVAILABLE">AVAILABLE</option>
+              <option value="ADOPTED">ADOPTED</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" id="petSubmitBtn" class="btn-primary">Save Pet</button>
+          <button type="button" id="petCancelBtn" class="btn-secondary hidden">Cancel Edit</button>
+        </div>
+      </form>
 
-    <script src="app.js"></script>
+      <div class="toolbar">
+        <label for="speciesFilter">Filter by Species:</label>
+        <input type="text" id="speciesFilter" placeholder="e.g., Dog" />
+        <button type="button" id="applyFilterBtn" class="btn-secondary">Filter</button>
+        <button type="button" id="clearFilterBtn" class="btn-secondary">Reset</button>
+
+        <span class="spacer"></span>
+
+        <label for="lookupPetId">Lookup ID:</label>
+        <input type="number" id="lookupPetId" placeholder="99" style="width: 80px;" />
+        <button type="button" id="lookupPetBtn" class="btn-secondary">Find</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Microchip</th>
+            <th>Name</th>
+            <th>Species</th>
+            <th>Breed</th>
+            <th>Status</th>
+            <th>Owner</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="petsTableBody"></tbody>
+      </table>
+    </section>
+
+    <!-- SECTION 3: OWNERS CRUD -->
+    <section class="card">
+      <h2>3. Owners Management (Principal Resource 2)</h2>
+      <form id="ownerForm">
+        <input type="hidden" id="ownerEditId" />
+        <div class="grid-3">
+          <div>
+            <label for="ownerFullName">Full Name *</label>
+            <input type="text" id="ownerFullName" required placeholder="Taylor Santos" />
+          </div>
+          <div>
+            <label for="ownerEmail">Email *</label>
+            <input type="email" id="ownerEmail" required placeholder="taylor@example.com" />
+          </div>
+          <div>
+            <label for="ownerPhone">Phone</label>
+            <input type="text" id="ownerPhone" placeholder="555-0199" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" id="ownerSubmitBtn" class="btn-primary">Save Owner</button>
+          <button type="button" id="ownerCancelBtn" class="btn-secondary hidden">Cancel Edit</button>
+        </div>
+      </form>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="ownersTableBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
 </body>
-
 </html>
