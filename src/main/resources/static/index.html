@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Pet & Task Manager — Week 13</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 700px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .box {
+            border: 1px solid #ccc;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 6px;
+        }
+
+        li {
+            cursor: pointer;
+            padding: 0.4rem 0;
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        #status {
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Pets Directory</h1>
+
+    <div>
+        <input type="number" id="pet-id-input" placeholder="Enter Pet ID" />
+        <button id="lookup-btn">Find Pet by ID</button>
+        <button id="reload-btn">Reload List</button>
+    </div>
+
+    <p id="status" role="status"></p>
+
+    <div class="box">
+        <h2>All Pets (Click one for details)</h2>
+        <ul id="items"></ul>
+    </div>
+
+    <div class="box">
+        <h2>Pet Details</h2>
+        <div id="detail">Select a pet above or search by ID.</div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
