@@ -23,6 +23,9 @@ public class Owner {
 
     private String phone;
 
+    @Column(name = "created_by", length = 60)
+    private String createdBy;
+
     public Owner() {
     }
 
@@ -62,5 +65,13 @@ public class Owner {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 }

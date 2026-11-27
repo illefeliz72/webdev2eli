@@ -10,9 +10,14 @@ body {
     padding: 0 1rem 3rem;
 }
 
-header {
+.top-bar {
     max-width: 1050px;
     margin: 1.5rem auto 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 header h1 {
@@ -25,9 +30,30 @@ header p {
     color: #4b5563;
 }
 
+.session-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.role-badge {
+    background: #1e293b;
+    color: #f8fafc;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
 main {
     max-width: 1050px;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+#appWorkspace {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
@@ -39,6 +65,10 @@ main {
     border-radius: 8px;
     padding: 1.25rem;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.login-card {
+    border-left: 4px solid #0f766e;
 }
 
 .workflow-card {
@@ -61,10 +91,25 @@ h3 {
     margin-top: -0.4rem;
 }
 
+.info-notice {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    padding: 0.6rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    margin-bottom: 0.75rem;
+}
+
 .grid-3 {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 0.75rem;
+}
+
+.align-end {
+    display: flex;
+    align-items: flex-end;
 }
 
 label {
@@ -75,6 +120,7 @@ label {
 }
 
 input[type="text"],
+input[type="password"],
 input[type="email"],
 input[type="number"],
 select {
@@ -219,5 +265,5 @@ th {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }

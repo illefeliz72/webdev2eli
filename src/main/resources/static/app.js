@@ -1,13 +1,43 @@
 const API_BASE = "";
 
+let csrfState = null; // Kept in memory only (Guide 2 & 3)
+let currentUser = null; // { username, role }
 let ownersCache = [];
 let petsCache = [];
 
-// Generic request helper supporting 204 No Content & structured errors
+async function fetchCsrfToken() {
+    const res = await fetch(`${API_BASE}/api/csrf`, {
+        method: "GET",
+        credentials: "same-origin"
+    });
+    if (!res.ok) {
+        throw new Error("Unable to initialize CSRF protection.");
+    }
+    csrfState = await res.json();
+    return csrfState;
+}
+
 async function request(path, options = {}) {
+    const method = (options.method || "GET").toUpperCase();
+    const isMutating = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
+
+    if (isMutating && !csrfState) {
+        await fetchCsrfToken();
+    }
+
+    const headers = { ...(options.headers || {}) };
+    if (isMutating && csrfState) {
+        headers[csrfState.headerName] = csrfState.token;
+    }
+
     let response;
     try {
-        response = await fetch(`${API_BASE}${path}`, options);
+        response = await fetch(`${API_BASE}${path}`, {
+            ...options,
+            method,
+            credentials: "same-origin",
+            headers
+        });
     } catch (networkErr) {
         const err = new Error("Network error: backend unreachable. Start the server and retry.");
         err.status = 0;
@@ -22,6 +52,11 @@ async function request(path, options = {}) {
             : await response.text();
 
     if (!response.ok) {
+        // Handle expired or missing session cleanly (Guide 4)
+        if (response.status === 401 && path !== "/api/auth/login" && path !== "/api/auth/me") {
+            setUnauthenticatedState("Session expired or unauthenticated (401). Please sign in again.");
+        }
+
         let message = `Request failed (${response.status})`;
         if (typeof body === "object" && body !== null) {
             message = body.message || message;
@@ -51,6 +86,96 @@ function clearBanner() {
     banner.className = "banner hidden";
 }
 
+function isManager() {
+    return currentUser && currentUser.role === "ROLE_MANAGER";
+}
+
+function applyRoleUI() {
+    const manager = isManager();
+    document.querySelectorAll("[data-manager-only='true']").forEach(el => {
+        if (manager) {
+            el.classList.remove("hidden");
+        } else {
+            el.classList.add("hidden");
+        }
+    });
+
+    const notice = document.getElementById("managerOnlyAdoptionNotice");
+    if (manager) {
+        notice.classList.add("hidden");
+    } else {
+        notice.classList.remove("hidden");
+    }
+}
+
+function setAuthenticatedState(user) {
+    currentUser = user;
+    document.getElementById("loginSection").classList.add("hidden");
+    document.getElementById("appWorkspace").classList.remove("hidden");
+    document.getElementById("sessionBar").classList.remove("hidden");
+    document.getElementById("currentUserBadge").textContent = `${user.username} (${user.role})`;
+    applyRoleUI();
+}
+
+function setUnauthenticatedState(bannerMessage = null) {
+    currentUser = null;
+    document.getElementById("loginSection").classList.remove("hidden");
+    document.getElementById("appWorkspace").classList.add("hidden");
+    document.getElementById("sessionBar").classList.add("hidden");
+    document.getElementById("currentUserBadge").textContent = "";
+    if (bannerMessage) {
+        showBanner(bannerMessage, true);
+    }
+}
+
+// --- AUTHENTICATION FLOW ---
+
+document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const submitBtn = document.getElementById("loginSubmitBtn");
+    submitBtn.disabled = true;
+
+    const username = document.getElementById("loginUsername").value.trim();
+    const password = document.getElementById("loginPassword").value;
+
+    try {
+        await fetchCsrfToken();
+        const user = await request("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+
+        // Rotate CSRF token immediately after authentication (Guide 3)
+        await fetchCsrfToken();
+
+        document.getElementById("loginPassword").value = "";
+        setAuthenticatedState(user);
+        showBanner(`Signed in as ${user.username} (${user.role}).`);
+        await refreshAll();
+    } catch (err) {
+        showBanner(`Sign-in failed (${err.status || "Network"}): ${err.message}`, true);
+    } finally {
+        submitBtn.disabled = false;
+    }
+});
+
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("logoutBtn");
+    btn.disabled = true;
+    try {
+        await request("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+        // Even if session already expired, reset client state
+    } finally {
+        csrfState = null;
+        await fetchCsrfToken().catch(() => { });
+        setUnauthenticatedState(null);
+        showBanner("Signed out. Protected endpoints now require authentication.");
+        btn.disabled = false;
+    }
+});
+
 // --- LOADERS & DROPDOWN POPULATION ---
 
 async function loadOwners() {
@@ -79,7 +204,9 @@ async function refreshAll() {
             loadAdoptions()
         ]);
     } catch (err) {
-        showBanner(err.message, true);
+        if (err.status !== 401) {
+            showBanner(err.message, true);
+        }
     }
 }
 
@@ -136,6 +263,8 @@ function renderPetsTable(pets) {
         return;
     }
 
+    const manager = isManager();
+
     pets.forEach(pet => {
         const tr = document.createElement("tr");
 
@@ -163,21 +292,25 @@ function renderPetsTable(pets) {
         });
 
         const actionTd = document.createElement("td");
-        const editBtn = document.createElement("button");
-        editBtn.type = "button";
-        editBtn.className = "btn-secondary";
-        editBtn.textContent = "Edit";
-        editBtn.style.marginRight = "0.35rem";
-        editBtn.addEventListener("click", () => startEditPet(pet));
+        if (manager) {
+            const editBtn = document.createElement("button");
+            editBtn.type = "button";
+            editBtn.className = "btn-secondary";
+            editBtn.textContent = "Edit";
+            editBtn.style.marginRight = "0.35rem";
+            editBtn.addEventListener("click", () => startEditPet(pet));
 
-        const delBtn = document.createElement("button");
-        delBtn.type = "button";
-        delBtn.className = "btn-danger";
-        delBtn.textContent = "Delete";
-        delBtn.addEventListener("click", () => handleDeletePet(pet));
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "btn-danger";
+            delBtn.textContent = "Delete";
+            delBtn.addEventListener("click", () => handleDeletePet(pet));
 
-        actionTd.appendChild(editBtn);
-        actionTd.appendChild(delBtn);
+            actionTd.appendChild(editBtn);
+            actionTd.appendChild(delBtn);
+        } else {
+            actionTd.textContent = "Read-only";
+        }
         tr.appendChild(actionTd);
         tbody.appendChild(tr);
     });
@@ -197,6 +330,8 @@ function renderOwnersTable(owners) {
         return;
     }
 
+    const manager = isManager();
+
     owners.forEach(owner => {
         const tr = document.createElement("tr");
         [owner.id, owner.fullName, owner.email, owner.phone || "-"].forEach(val => {
@@ -206,21 +341,25 @@ function renderOwnersTable(owners) {
         });
 
         const actionTd = document.createElement("td");
-        const editBtn = document.createElement("button");
-        editBtn.type = "button";
-        editBtn.className = "btn-secondary";
-        editBtn.textContent = "Edit";
-        editBtn.style.marginRight = "0.35rem";
-        editBtn.addEventListener("click", () => startEditOwner(owner));
+        if (manager) {
+            const editBtn = document.createElement("button");
+            editBtn.type = "button";
+            editBtn.className = "btn-secondary";
+            editBtn.textContent = "Edit";
+            editBtn.style.marginRight = "0.35rem";
+            editBtn.addEventListener("click", () => startEditOwner(owner));
 
-        const delBtn = document.createElement("button");
-        delBtn.type = "button";
-        delBtn.className = "btn-danger";
-        delBtn.textContent = "Delete";
-        delBtn.addEventListener("click", () => handleDeleteOwner(owner));
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "btn-danger";
+            delBtn.textContent = "Delete";
+            delBtn.addEventListener("click", () => handleDeleteOwner(owner));
 
-        actionTd.appendChild(editBtn);
-        actionTd.appendChild(delBtn);
+            actionTd.appendChild(editBtn);
+            actionTd.appendChild(delBtn);
+        } else {
+            actionTd.textContent = "Read-only";
+        }
         tr.appendChild(actionTd);
         tbody.appendChild(tr);
     });
@@ -475,5 +614,17 @@ document.getElementById("lookupPetBtn").addEventListener("click", async () => {
     }
 });
 
-// Initial load
-refreshAll();
+// --- BOOTSTRAP SESSION & CSRF ---
+
+async function initApp() {
+    try {
+        await fetchCsrfToken();
+        const user = await request("/api/auth/me");
+        setAuthenticatedState(user);
+        await refreshAll();
+    } catch (err) {
+        setUnauthenticatedState(null);
+    }
+}
+
+initApp();
